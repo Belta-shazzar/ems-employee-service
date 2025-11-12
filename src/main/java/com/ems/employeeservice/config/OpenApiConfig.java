@@ -28,7 +28,7 @@ public class OpenApiConfig {
                         )
                 .servers(List.of(
                         new Server().url("http://localhost:8020").description("Local Development Server"),
-                        new Server().url("http://localhost:8000").description("API Gateway")
+                        new Server().url("http://localhost:8000/employment-service").description("API Gateway")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new io.swagger.v3.oas.models.Components()

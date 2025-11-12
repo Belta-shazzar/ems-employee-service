@@ -3,8 +3,10 @@ package com.ems.employeeservice.exception;
 import com.ems.employeeservice.exception.custom.ConflictException;
 import com.ems.employeeservice.exception.custom.ResourceNotFoundException;
 import com.ems.employeeservice.exception.custom.UnauthorizedException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -25,7 +28,7 @@ public class GlobalExceptionHandler {
             .error("Conflict")
             .message(ex.getMessage())
             .build();
-    return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(error, HttpStatus.CONFLICT);
   }
 
   @ExceptionHandler(ResourceNotFoundException.class)
@@ -50,6 +53,17 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
   }
 
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
+    ErrorResponse error = ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.FORBIDDEN.value())
+            .error(ex.getMessage())
+            .message("You do not have permission to perform this action.")
+            .build();
+    return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+  }
+
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
     Map<String, String> errors = new HashMap<>();
@@ -71,6 +85,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
+    log.error("The Exception: ", ex);
     ErrorResponse error = ErrorResponse.builder()
         .timestamp(LocalDateTime.now())
         .status(HttpStatus.INTERNAL_SERVER_ERROR.value())

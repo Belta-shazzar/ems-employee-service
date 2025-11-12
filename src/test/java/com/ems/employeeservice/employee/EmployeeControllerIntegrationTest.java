@@ -29,15 +29,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
-@ActiveProfiles("test")
 @EmbeddedKafka(partitions = 1, topics = {"employee-created-topic"})
 @Transactional
 @DisplayName("Employee Controller Integration Tests")
 class EmployeeControllerIntegrationTest {
 
   @Container
+  @SuppressWarnings("resource")
   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
-          .withDatabaseName("testdb")
+          .withDatabaseName("test_db")
           .withUsername("test")
           .withPassword("test");
 

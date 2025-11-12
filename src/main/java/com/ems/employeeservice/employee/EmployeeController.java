@@ -6,6 +6,7 @@ import com.ems.employeeservice.employee.dto.EmployeeRequest;
 import com.ems.employeeservice.employee.dto.EmployeeResponse;
 import com.ems.employeeservice.employee.enums.EmployeeRole;
 import com.ems.employeeservice.employee.service.EmployeeService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -113,9 +114,14 @@ public class EmployeeController {
   @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
   public ResponseEntity<EmployeeResponse> getEmployeeById(
           @Parameter(description = "Employee ID", required = true) @PathVariable UUID id,
-          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ROLE) EmployeeRole role,
+          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ROLE) String _role,          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ROLE) String roleHeader,
+//          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ROLE) String roleHeader,
           @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ID) UUID requesterId) {
     EmployeeResponse response;
+
+    EmployeeRole role = EmployeeRole.valueOf(
+            _role.startsWith("ROLE_") ? _role.substring(5) : _role
+    );
 
     if (role == EmployeeRole.MANAGER) {
       response = employeeService.getEmployeeById(id, requesterId);
@@ -156,6 +162,7 @@ public class EmployeeController {
                   content = @Content(schema = @Schema(implementation = AuthServiceEmployeeResponse.class))),
           @ApiResponse(responseCode = "404", description = "Employee not found")
   })
+  @Hidden
   @GetMapping("/email/{email}")
   public ResponseEntity<AuthServiceEmployeeResponse> getEmployeeByEmail(
           @Parameter(description = "Employee email", required = true) @PathVariable String email) {

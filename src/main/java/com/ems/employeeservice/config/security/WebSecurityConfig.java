@@ -23,6 +23,7 @@ public class WebSecurityConfig {
           "/api/employees/email/{email}",
 
           // Swagger UI and API docs
+          "/v3/api-docs",
           "/v3/api-docs/**",
           "/swagger-ui/**",
           "/swagger-ui.html",

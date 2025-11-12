@@ -12,7 +12,7 @@ The database seeder automatically creates initial data for the Employee Manageme
 
 ### Prerequisites
 - PostgreSQL database must be running
-- Database `ems` must be created
+- Database `employee_management` must be created
 - Employee Service must be able to connect to the database
 
 ### Commands
@@ -55,39 +55,7 @@ seed.bat
 
 1. **User IDs**: The seeder will output the UUID for each created user. **Copy these IDs** - you'll need them to set passwords!
 
-2. **No Passwords Set**: The seeder only creates employee records. You must set passwords using the Auth Service.
-
-3. **No Kafka Events**: The seeder bypasses the normal employee creation flow, so no email notifications are sent.
-
-### Setting Passwords
-
-For each user, you need to set a password using the Auth Service:
-
-```bash
-# Set password for admin
-curl -X POST http://localhost:8082/api/auth/set-password \
-  -H "Content-Type: application/json" \
-  -d '{
-    "token": "ADMIN_USER_ID",
-    "password": "YourSecurePassword123"
-  }'
-
-# Set password for manager
-curl -X POST http://localhost:8082/api/auth/set-password \
-  -H "Content-Type: application/json" \
-  -d '{
-    "token": "MANAGER_USER_ID",
-    "password": "YourSecurePassword123"
-  }'
-
-# Set password for employee
-curl -X POST http://localhost:8082/api/auth/set-password \
-  -H "Content-Type: application/json" \
-  -d '{
-    "token": "EMPLOYEE_USER_ID",
-    "password": "YourSecurePassword123"
-  }'
-```
+2. **No Kafka Events**: The seeder bypasses the normal employee creation flow, so no email notifications are sent.
 
 ### Logging In
 
