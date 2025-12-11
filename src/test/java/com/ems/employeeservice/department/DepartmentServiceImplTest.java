@@ -48,11 +48,13 @@ class DepartmentServiceImplTest {
     testDepartment = Department.builder()
             .id(UUID.randomUUID())
             .name(DEPARTMENT_NAME)
+            .description(DEPARTMENT_NAME)
+            .active(true)
             .createdAt(now)
             .updatedAt(now)
             .build();
 
-    testRequest = new DepartmentRequest(DEPARTMENT_NAME);
+    testRequest = new DepartmentRequest(DEPARTMENT_NAME, null, true);
   }
 
   @Nested
@@ -100,10 +102,12 @@ class DepartmentServiceImplTest {
     void shouldCreateDepartmentWithDifferentName() {
       // Given
       String newDepartmentName = "Human Resources";
-      DepartmentRequest newRequest = new DepartmentRequest(newDepartmentName);
+      DepartmentRequest newRequest = new DepartmentRequest(newDepartmentName, newDepartmentName, true);
       Department newDepartment = Department.builder()
               .id(UUID.randomUUID())
               .name(newDepartmentName)
+              .description(newDepartmentName)
+              .active(true)
               .createdAt(now)
               .updatedAt(now)
               .build();
@@ -133,11 +137,13 @@ class DepartmentServiceImplTest {
       // Given
       UUID departmentId = testDepartment.getId();
       String updatedName = "Updated Engineering";
-      DepartmentRequest updateRequest = new DepartmentRequest(updatedName);
+      DepartmentRequest updateRequest = new DepartmentRequest(updatedName, updatedName, true);
 
       Department updatedDepartment = Department.builder()
               .id(departmentId)
               .name(updatedName)
+              .description(updatedName)
+              .active(true)
               .createdAt(now)
               .updatedAt(LocalDateTime.now())
               .build();
@@ -179,7 +185,7 @@ class DepartmentServiceImplTest {
       // Given
       UUID departmentId = testDepartment.getId();
       String newName = "Finance";
-      DepartmentRequest updateRequest = new DepartmentRequest(newName);
+      DepartmentRequest updateRequest = new DepartmentRequest(newName, newName, true);
 
       when(departmentRepository.findById(departmentId)).thenReturn(Optional.of(testDepartment));
       when(departmentRepository.save(any(Department.class))).thenAnswer(invocation -> {
@@ -320,6 +326,8 @@ class DepartmentServiceImplTest {
       Department department2 = Department.builder()
               .id(UUID.randomUUID())
               .name("Human Resources")
+              .description("Human Resources")
+              .active(true)
               .createdAt(now)
               .updatedAt(now)
               .build();
@@ -327,6 +335,8 @@ class DepartmentServiceImplTest {
       Department department3 = Department.builder()
               .id(UUID.randomUUID())
               .name("Finance")
+              .description("Finance")
+              .active(true)
               .createdAt(now)
               .updatedAt(now)
               .build();
@@ -432,6 +442,8 @@ class DepartmentServiceImplTest {
       Department deptWithNullTimestamps = Department.builder()
               .id(UUID.randomUUID())
               .name("Test Department")
+              .description("Test Department")
+              .active(true)
               .createdAt(null)
               .updatedAt(null)
               .build();

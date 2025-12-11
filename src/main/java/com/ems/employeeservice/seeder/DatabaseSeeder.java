@@ -13,6 +13,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.IntStream;
+
 @Component
 @Slf4j
 @Profile("seed")
@@ -23,98 +27,137 @@ public class DatabaseSeeder implements CommandLineRunner {
   private final DepartmentRepository departmentRepository;
   private final PasswordEncoder passwordEncoder;
 
+  private static final int TOTAL_EMPLOYEES = 100;
+
   @Override
   public void run(String... args) {
-    log.info("Starting database seeding...");
 
-    // Check if admin already exists
-    if (employeeRepository.findByEmail("admin@company.com").isPresent()) {
-      log.info("Admin user already exists. Skipping seeding.");
-      return;
-    }
+    log.info("======== Starting Tech Company Database Seeding ========");
 
-    // Create Admin Department
-    Department adminDepartment = Department.builder()
-            .name("Administration")
-            .build();
-    adminDepartment = departmentRepository.save(adminDepartment);
-    log.info("Created department: {}", adminDepartment.getName());
+//    if (employeeRepository.count() > 1) {
+//      log.info("Employees already exist. Skipping seeding.");
+//      return;
+//    }
 
-    // Create Admin User
-    Employee admin = Employee.builder()
-            .firstName("System")
-            .lastName("Administrator")
-            .email("admin@company.com")
-            .password(passwordEncoder.encode("password123"))
-            .role(EmployeeRole.ADMIN)
-            .status(EmployeeStatus.ACTIVE)
-            .department(adminDepartment)
-            .build();
-    admin = employeeRepository.save(admin);
-    log.info("Created admin user: {} (ID: {})", admin.getEmail(), admin.getId());
+    // ---------------------------------------------------------
+    // 1. Seed Departments
+    // ---------------------------------------------------------
+    List<String> departmentNames = List.of(
+            "Engineering",
+            "Human Resources",
+            "Product",
+            "Design",
+            "Marketing",
+            "Sales",
+            "Finance",
+            "IT Support",
+            "Security",
+            "Administration"
+    );
 
-    // Create some sample departments
-    Department engineeringDept = Department.builder()
-            .name("Engineering")
-            .build();
-    engineeringDept = departmentRepository.save(engineeringDept);
-    log.info("Created department: {}", engineeringDept.getName());
+    List<Department> departments = departmentNames.stream()
+            .map(name -> Department.builder().name(name).description("").active(true).build())
+            .map(departmentRepository::save)
+            .toList();
 
-    Department hrDept = Department.builder()
-            .name("Human Resources")
-            .build();
-    hrDept = departmentRepository.save(hrDept);
-    log.info("Created department: {}", hrDept.getName());
+    log.info("Created {} departments", departments.size());
 
-    Department salesDept = Department.builder()
-            .name("Sales")
-            .build();
-    salesDept = departmentRepository.save(salesDept);
-    log.info("Created department: {}", salesDept.getName());
+    // ---------------------------------------------------------
+    // 2. Create User Counts by Status
+    // ---------------------------------------------------------
+    int activeCount = (int) (TOTAL_EMPLOYEES * 0.70);     // 70 ACTIVE
+    int pendingCount = (int) (TOTAL_EMPLOYEES * 0.20);    // 20 PENDING
+    int othersCount = TOTAL_EMPLOYEES - activeCount - pendingCount; // 10
 
-    // Create a sample manager
-    Employee manager = Employee.builder()
-            .firstName("Jane")
-            .lastName("Manager")
-            .email("manager@company.com")
-            .password(passwordEncoder.encode("password123"))
-            .role(EmployeeRole.MANAGER)
-            .status(EmployeeStatus.ACTIVE)
-            .department(engineeringDept)
-            .build();
-    manager = employeeRepository.save(manager);
-    log.info("Created manager user: {} (ID: {})", manager.getEmail(), manager.getId());
+    int suspendedCount = othersCount / 2;  // 5 suspended
+    int deletedCount = othersCount - suspendedCount; // 5 deleted
 
-    // Create a sample employee
-    Employee employee = Employee.builder()
-            .firstName("John")
-            .lastName("Employee")
-            .email("employee@company.com")
-            .password(passwordEncoder.encode("password123"))
-            .role(EmployeeRole.EMPLOYEE)
-            .status(EmployeeStatus.ACTIVE)
-            .department(engineeringDept)
-            .build();
-    employee = employeeRepository.save(employee);
-    log.info("Created employee user: {} (ID: {})", employee.getEmail(), employee.getId());
+    List<EmployeeStatus> statuses = new ArrayList<>();
+    statuses.addAll(Collections.nCopies(activeCount, EmployeeStatus.ACTIVE));
+    statuses.addAll(Collections.nCopies(pendingCount, EmployeeStatus.PENDING));
+    statuses.addAll(Collections.nCopies(suspendedCount, EmployeeStatus.SUSPENDED));
+    statuses.addAll(Collections.nCopies(deletedCount, EmployeeStatus.DELETED));
 
-    log.info("Database seeding completed successfully!");
-    log.info("===========================================");
-    log.info("Admin credentials:");
-    log.info("  Email: admin@company.com");
-    log.info("  ID: {}", admin.getId());
-    log.info("  Note: Set password using Auth Service");
-    log.info("===========================================");
-    log.info("Manager credentials:");
-    log.info("  Email: manager@company.com");
-    log.info("  ID: {}", manager.getId());
-    log.info("===========================================");
-    log.info("Employee credentials:");
-    log.info("  Email: employee@company.com");
-    log.info("  ID: {}", employee.getId());
-    log.info("===========================================");
+    Collections.shuffle(statuses);
 
-    // ✅ Exit application after seeding
+    // ---------------------------------------------------------
+    // 3. Create Employees
+    // Includes Admins + Managers + Employees
+    // ---------------------------------------------------------
+
+    List<String> firstNames = List.of(
+            "John", "Jane", "Michael", "Sarah", "Daniel", "Grace", "David", "Helen",
+            "Samuel", "Cynthia", "Mark", "Ifeoma", "Matthew", "Victoria", "Peter",
+            "Sophia", "Paul", "Abigail", "Timothy", "Olivia"
+    );
+
+    List<String> lastNames = List.of(
+            "Johnson", "Williams", "Brown", "Ejiofor", "Smith", "Garcia", "Musa",
+            "Okafor", "Ibrahim", "Adams", "Chukwu", "Eze", "Ojo", "James", "Richards"
+    );
+
+    // Ensure at least:
+    // - 3 Admins
+    // - 7 Managers
+    int adminCount = 3;
+    int managerCount = 7;
+
+    List<EmployeeRole> roles = new ArrayList<>();
+    roles.addAll(Collections.nCopies(adminCount, EmployeeRole.ADMIN));
+    roles.addAll(Collections.nCopies(managerCount, EmployeeRole.MANAGER));
+    roles.addAll(Collections.nCopies(TOTAL_EMPLOYEES - adminCount - managerCount, EmployeeRole.EMPLOYEE));
+
+    Collections.shuffle(roles);
+
+    List<Employee> employees = IntStream.range(0, TOTAL_EMPLOYEES)
+            .mapToObj(i -> {
+
+              String first = firstNames.get(ThreadLocalRandom.current().nextInt(firstNames.size()));
+              String last = lastNames.get(ThreadLocalRandom.current().nextInt(lastNames.size()));
+              String email = (first + "." + last + i + "@company.com")
+                      .toLowerCase()
+                      .replace(" ", "");
+
+              Department randomDept = departments.get(
+                      ThreadLocalRandom.current().nextInt(departments.size())
+              );
+
+              return Employee.builder()
+                      .firstName(first)
+                      .lastName(last)
+                      .email(email)
+                      .password(passwordEncoder.encode("password123"))
+                      .role(roles.get(i))
+                      .status(statuses.get(i))
+                      .department(randomDept)
+                      .build();
+            })
+            .map(employeeRepository::save)
+            .toList();
+
+    log.info("Created {} employees", employees.size());
+
+    // ---------------------------------------------------------
+    // 4. Summary Logs
+    // ---------------------------------------------------------
+
+    long admins = employees.stream().filter(e -> e.getRole() == EmployeeRole.ADMIN).count();
+    long managers = employees.stream().filter(e -> e.getRole() == EmployeeRole.MANAGER).count();
+    long active = employees.stream().filter(e -> e.getStatus() == EmployeeStatus.ACTIVE).count();
+    long pending = employees.stream().filter(e -> e.getStatus() == EmployeeStatus.PENDING).count();
+    long suspended = employees.stream().filter(e -> e.getStatus() == EmployeeStatus.SUSPENDED).count();
+    long deleted = employees.stream().filter(e -> e.getStatus() == EmployeeStatus.DELETED).count();
+
+    log.info("========= SEEDING SUMMARY =========");
+    log.info("Total employees: {}", employees.size());
+    log.info("Admins: {}", admins);
+    log.info("Managers: {}", managers);
+    log.info("Active: {}", active);
+    log.info("Pending: {}", pending);
+    log.info("Suspended: {}", suspended);
+    log.info("Deleted: {}", deleted);
+    log.info("===================================");
+
     log.info("Seeding completed — shutting down application...");
     System.exit(0);
   }

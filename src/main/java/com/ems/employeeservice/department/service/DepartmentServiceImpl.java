@@ -32,6 +32,8 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     Department department = Department.builder()
             .name(request.name())
+            .description(request.description())
+            .active(request.active())
             .build();
 
     Department savedDepartment = departmentRepository.save(department);
@@ -95,6 +97,8 @@ public class DepartmentServiceImpl implements DepartmentService {
     return new DepartmentResponse(
             department.getId(),
             department.getName(),
+            department.getDescription(),
+            department.isActive(),
             department.getCreatedAt(),
             department.getUpdatedAt());
   }

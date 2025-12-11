@@ -38,6 +38,12 @@ public class Department {
   @Column(nullable = false, unique = true, length = 100)
   private String name;
 
+  @Column(length = 500)
+  private String description;
+
+  @Column(nullable = false)
+  private boolean active = true;
+
   @CreationTimestamp
   @Column(nullable = false, updatable = false, name = "created_at")
   private LocalDateTime createdAt;

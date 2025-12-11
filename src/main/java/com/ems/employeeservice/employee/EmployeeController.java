@@ -100,8 +100,7 @@ public class EmployeeController {
   @Operation(
           summary = "Get employee by ID",
           description = "Retrieves employee details by ID with role-based access control. " +
-                  "Admin can view any employee, Manager can view employees in their department, " +
-                  "Employee can view only their own details."
+                  "Admin can view any employee, Manager can view employees in their department."
   )
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "Employee retrieved successfully",
@@ -111,11 +110,10 @@ public class EmployeeController {
           @ApiResponse(responseCode = "404", description = "Employee not found")
   })
   @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'EMPLOYEE')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
   public ResponseEntity<EmployeeResponse> getEmployeeById(
           @Parameter(description = "Employee ID", required = true) @PathVariable UUID id,
-          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ROLE) String _role,          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ROLE) String roleHeader,
-//          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ROLE) String roleHeader,
+          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ROLE) String _role,
           @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ID) UUID requesterId) {
     EmployeeResponse response;
 
@@ -125,8 +123,6 @@ public class EmployeeController {
 
     if (role == EmployeeRole.MANAGER) {
       response = employeeService.getEmployeeById(id, requesterId);
-    } else if (role == EmployeeRole.EMPLOYEE) {
-      response = employeeService.getEmployeeById(requesterId, null);
     } else {
       response = employeeService.getEmployeeById(id, null);
     }
@@ -167,6 +163,25 @@ public class EmployeeController {
   public ResponseEntity<AuthServiceEmployeeResponse> getEmployeeByEmail(
           @Parameter(description = "Employee email", required = true) @PathVariable String email) {
     AuthServiceEmployeeResponse response = employeeService.getEmployeeByEmail(email);
+    return ResponseEntity.ok(response);
+  }
+
+  @Operation(
+          summary = "Get authenticated employee",
+          description = "Get the currently authenticated employee from their JWT token."
+  )
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "Employee retrieved successfully",
+                  content = @Content(schema = @Schema(implementation = EmployeeResponse.class))),
+          @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing JWT token"),
+          @ApiResponse(responseCode = "404", description = "Employee not found")
+  })
+  @GetMapping("/authenticated")
+  public ResponseEntity<EmployeeResponse> getAuthenticatedEmployee(
+          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ID) UUID employeeId
+  ) {
+
+    EmployeeResponse response = employeeService.getEmployeeById(employeeId, null);
     return ResponseEntity.ok(response);
   }
 }

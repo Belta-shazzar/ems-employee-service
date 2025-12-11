@@ -58,7 +58,7 @@ class DepartmentControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldCreateDepartmentWithAdminRole() throws Exception {
       // Given
-      DepartmentRequest request = new DepartmentRequest("Engineering");
+      DepartmentRequest request = new DepartmentRequest("Engineering", "Engineering", true);
 
       // When & Then
       mockMvc.perform(post("/api/departments")
@@ -75,8 +75,8 @@ class DepartmentControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldReturn409WhenCreatingDepartmentWithDuplicateName() throws Exception {
       // Given
-      departmentRepository.save(Department.builder().name("Engineering").build());
-      DepartmentRequest request = new DepartmentRequest("Engineering");
+      departmentRepository.save(Department.builder().name("Engineering").description("Engineering").active(true).build());
+      DepartmentRequest request = new DepartmentRequest("Engineering", "Engineering", true);
 
       // When & Then
       mockMvc.perform(post("/api/departments")
@@ -91,7 +91,7 @@ class DepartmentControllerIntegrationTest {
     @WithMockUser(roles = "EMPLOYEE")
     void shouldReturn403WhenNonAdminTriesToCreateDepartment() throws Exception {
       // Given
-      DepartmentRequest request = new DepartmentRequest("Engineering");
+      DepartmentRequest request = new DepartmentRequest("Engineering", "Engineering", true);
 
       // When & Then
       mockMvc.perform(post("/api/departments")
@@ -106,7 +106,7 @@ class DepartmentControllerIntegrationTest {
     @WithMockUser(roles = "MANAGER")
     void shouldReturn403WhenManagerTriesToCreateDepartment() throws Exception {
       // Given
-      DepartmentRequest request = new DepartmentRequest("Engineering");
+      DepartmentRequest request = new DepartmentRequest("Engineering", "Engineering", true);
 
       // When & Then
       mockMvc.perform(post("/api/departments")
@@ -121,7 +121,7 @@ class DepartmentControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldReturn400WhenCreatingDepartmentWithInvalidData() throws Exception {
       // Given
-      DepartmentRequest request = new DepartmentRequest(null);
+      DepartmentRequest request = new DepartmentRequest(null, null, false);
 
       // When & Then
       mockMvc.perform(post("/api/departments")
@@ -136,8 +136,8 @@ class DepartmentControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldCreateMultipleDepartmentsSuccessfully() throws Exception {
       // Given
-      DepartmentRequest request1 = new DepartmentRequest("Engineering");
-      DepartmentRequest request2 = new DepartmentRequest("Human Resources");
+      DepartmentRequest request1 = new DepartmentRequest("Engineering", "Engineering", true);
+      DepartmentRequest request2 = new DepartmentRequest("Human Resources", "Human Resources", true);
 
       // When & Then
       mockMvc.perform(post("/api/departments")
@@ -166,9 +166,9 @@ class DepartmentControllerIntegrationTest {
     void shouldUpdateDepartmentWithAdminRole() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("Engineering").active(true).build()
       );
-      DepartmentRequest updateRequest = new DepartmentRequest("Updated Engineering");
+      DepartmentRequest updateRequest = new DepartmentRequest("Updated Engineering", "Updated Engineering", true);
 
       // When & Then
       mockMvc.perform(put("/api/departments/{id}", department.getId())
@@ -186,7 +186,7 @@ class DepartmentControllerIntegrationTest {
     void shouldReturn404WhenUpdatingNonExistentDepartment() throws Exception {
       // Given
       UUID nonExistentId = UUID.randomUUID();
-      DepartmentRequest updateRequest = new DepartmentRequest("Updated Name");
+      DepartmentRequest updateRequest = new DepartmentRequest("Updated Name",  "", false);
 
       // When & Then
       mockMvc.perform(put("/api/departments/{id}", nonExistentId)
@@ -202,9 +202,9 @@ class DepartmentControllerIntegrationTest {
     void shouldReturn403WhenNonAdminTriesToUpdateDepartment() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("").active(true).build()
       );
-      DepartmentRequest updateRequest = new DepartmentRequest("Updated Engineering");
+      DepartmentRequest updateRequest = new DepartmentRequest("Updated Engineering",  "Updated Engineering", true);
 
       // When & Then
       mockMvc.perform(put("/api/departments/{id}", department.getId())
@@ -220,9 +220,9 @@ class DepartmentControllerIntegrationTest {
     void shouldReturn403WhenManagerTriesToUpdateDepartment() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("").active(true).build()
       );
-      DepartmentRequest updateRequest = new DepartmentRequest("Updated Engineering");
+      DepartmentRequest updateRequest = new DepartmentRequest("Updated Engineering",  "Updated Engineering", true);
 
       // When & Then
       mockMvc.perform(put("/api/departments/{id}", department.getId())
@@ -238,9 +238,9 @@ class DepartmentControllerIntegrationTest {
     void shouldReturn400WhenUpdatingDepartmentWithInvalidData() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("").active(true).build()
       );
-      DepartmentRequest updateRequest = new DepartmentRequest(null);
+      DepartmentRequest updateRequest = new DepartmentRequest(null, null, false);
 
       // When & Then
       mockMvc.perform(put("/api/departments/{id}", department.getId())
@@ -261,7 +261,7 @@ class DepartmentControllerIntegrationTest {
     void shouldDeleteDepartmentWithAdminRole() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("").active(true).build()
       );
 
       // When & Then
@@ -294,7 +294,7 @@ class DepartmentControllerIntegrationTest {
     void shouldReturn403WhenNonAdminTriesToDeleteDepartment() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("").active(true).build()
       );
 
       // When & Then
@@ -309,7 +309,7 @@ class DepartmentControllerIntegrationTest {
     void shouldReturn403WhenManagerTriesToDeleteDepartment() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("").active(true).build()
       );
 
       // When & Then
@@ -329,7 +329,7 @@ class DepartmentControllerIntegrationTest {
     void shouldGetDepartmentByIdWithAdminRole() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("").active(true).build()
       );
 
       // When & Then
@@ -359,7 +359,7 @@ class DepartmentControllerIntegrationTest {
     void shouldReturn403WhenNonAdminTriesToGetDepartmentById() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("").active(true).build()
       );
 
       // When & Then
@@ -374,7 +374,7 @@ class DepartmentControllerIntegrationTest {
     void shouldReturn403WhenManagerTriesToGetDepartmentById() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("").active(true).build()
       );
 
       // When & Then
@@ -393,9 +393,9 @@ class DepartmentControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldGetAllDepartmentsWithAdminRole() throws Exception {
       // Given
-      departmentRepository.save(Department.builder().name("Engineering").build());
-      departmentRepository.save(Department.builder().name("Human Resources").build());
-      departmentRepository.save(Department.builder().name("Finance").build());
+      departmentRepository.save(Department.builder().name("Engineering").description("").active(true).build());
+      departmentRepository.save(Department.builder().name("Human Resources").description("").active(true).build());
+      departmentRepository.save(Department.builder().name("Finance").description("").active(true).build());
 
       // When & Then
       mockMvc.perform(get("/api/departments"))
@@ -424,7 +424,7 @@ class DepartmentControllerIntegrationTest {
     void shouldReturnSingleDepartmentInList() throws Exception {
       // Given
       Department department = departmentRepository.save(
-              Department.builder().name("Engineering").build()
+              Department.builder().name("Engineering").description("Engineering").active(true).build()
       );
 
       // When & Then
@@ -466,7 +466,7 @@ class DepartmentControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldCompleteFullCRUDLifecycle() throws Exception {
       // Create
-      DepartmentRequest createRequest = new DepartmentRequest("Engineering");
+      DepartmentRequest createRequest = new DepartmentRequest("Engineering", "Engineering", true);
       String createResponse = mockMvc.perform(post("/api/departments")
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(objectMapper.writeValueAsString(createRequest)))
@@ -484,7 +484,7 @@ class DepartmentControllerIntegrationTest {
               .andExpect(jsonPath("$.name").value("Engineering"));
 
       // Update
-      DepartmentRequest updateRequest = new DepartmentRequest("Updated Engineering");
+      DepartmentRequest updateRequest = new DepartmentRequest("Updated Engineering", "", true);
       mockMvc.perform(put("/api/departments/{id}", departmentId)
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(objectMapper.writeValueAsString(updateRequest)))
@@ -505,14 +505,14 @@ class DepartmentControllerIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void shouldVerifyDepartmentPersistenceAcrossOperations() throws Exception {
       // Create first department
-      DepartmentRequest request1 = new DepartmentRequest("Engineering");
+      DepartmentRequest request1 = new DepartmentRequest("Engineering", "Engineering", true);
       mockMvc.perform(post("/api/departments")
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(objectMapper.writeValueAsString(request1)))
               .andExpect(status().isCreated());
 
       // Create second department
-      DepartmentRequest request2 = new DepartmentRequest("Human Resources");
+      DepartmentRequest request2 = new DepartmentRequest("Human Resources", "HR", true);
       mockMvc.perform(post("/api/departments")
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(objectMapper.writeValueAsString(request2)))
