@@ -1,9 +1,11 @@
 package com.ems.employeeservice.employee;
 
 import com.ems.employeeservice.config.security.enums.UserHttpHeaders;
-import com.ems.employeeservice.employee.dto.AuthServiceEmployeeResponse;
-import com.ems.employeeservice.employee.dto.EmployeeRequest;
-import com.ems.employeeservice.employee.dto.EmployeeResponse;
+import com.ems.employeeservice.employee.dto.request.GetEmployeesParamDto;
+import com.ems.employeeservice.employee.dto.response.AuthServiceEmployeeResponse;
+import com.ems.employeeservice.employee.dto.request.EmployeeRequest;
+import com.ems.employeeservice.employee.dto.response.EmployeeResponse;
+import com.ems.employeeservice.employee.dto.response.paginated.PagedResponse;
 import com.ems.employeeservice.employee.enums.EmployeeRole;
 import com.ems.employeeservice.employee.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -17,12 +19,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -133,7 +135,8 @@ public class EmployeeController {
   @Operation(
           summary = "Get all employees",
           description = "Retrieves all employees with role-based filtering. " +
-                  "Admin can view all employees, Manager can view employees in their department."
+                  "Admin can view all employees, Manager can view employees in their department. " +
+                  "Supports pagination via page and size query parameters."
   )
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "Employees retrieved successfully"),
@@ -142,10 +145,11 @@ public class EmployeeController {
   })
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-  public ResponseEntity<List<EmployeeResponse>> getAllEmployees(
-          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ID) UUID requesterId
+  public ResponseEntity<PagedResponse<EmployeeResponse>> getAllEmployees(
+          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ID) UUID requesterId,
+          @ModelAttribute GetEmployeesParamDto paramDto
   ) {
-    List<EmployeeResponse> response = employeeService.getAllEmployees(requesterId);
+    PagedResponse<EmployeeResponse> response = employeeService.getAllEmployees(requesterId, paramDto);
     return ResponseEntity.ok(response);
   }
 

@@ -3,25 +3,30 @@ package com.ems.employeeservice.employee.service;
 import com.ems.employeeservice.department.Department;
 import com.ems.employeeservice.department.DepartmentRepository;
 import com.ems.employeeservice.employee.Employee;
-import com.ems.employeeservice.employee.EmployeeRepository;
-import com.ems.employeeservice.employee.dto.AuthServiceEmployeeResponse;
-import com.ems.employeeservice.employee.dto.EmployeeRequest;
-import com.ems.employeeservice.employee.dto.EmployeeResponse;
+import com.ems.employeeservice.employee.dto.response.paginated.PagedResponse;
+import com.ems.employeeservice.employee.repository.EmployeeRepository;
+import com.ems.employeeservice.employee.dto.request.GetEmployeesParamDto;
+import com.ems.employeeservice.employee.dto.response.AuthServiceEmployeeResponse;
+import com.ems.employeeservice.employee.dto.request.EmployeeRequest;
+import com.ems.employeeservice.employee.dto.response.EmployeeResponse;
 import com.ems.employeeservice.employee.enums.EmployeeRole;
 import com.ems.employeeservice.employee.enums.EmployeeStatus;
+import com.ems.employeeservice.employee.repository.EmployeeSpecification;
 import com.ems.employeeservice.event.EmployeeCreatedEvent;
 import com.ems.employeeservice.exception.custom.ConflictException;
 import com.ems.employeeservice.exception.custom.ResourceNotFoundException;
 import com.ems.employeeservice.kafka.EmployeeEventProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -131,25 +136,34 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<EmployeeResponse> getAllEmployees(UUID requesterId) {
+  public PagedResponse<EmployeeResponse> getAllEmployees(UUID requesterId, GetEmployeesParamDto dto) {
     Employee employee = employeeRepository.findById(requesterId)
             .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + requesterId));
-    List<Employee> employees;
+    int pageIndex = Math.max(dto.page() - 1, 0);
 
+    // Paging
+    Pageable pageable = PageRequest.of(
+            pageIndex,
+            dto.size(),
+            dto.orderBy().toSort(dto.sortBy())
+    );
 
+    // Base specification from dto
+    Specification<Employee> spec = EmployeeSpecification.filter(dto, employee.getRole())
+            .and(EmployeeSpecification.excludeEmployee(employee.getId()));
+
+    // Manager restriction: only see employees in same department
     if (employee.getRole() == EmployeeRole.MANAGER) {
-      //      Fetch all except the Manager's id
-      UUID departmentId = employee.getDepartment().getId();
-      employees = employeeRepository.findByDepartmentIdAndIdNot(departmentId, employee.getId());
-    } else {
-      //      Fetch all except the Admin id
-      employees = employeeRepository.findByIdNot(employee.getId());
+      spec = spec.and(EmployeeSpecification.sameDepartment(
+              employee.getDepartment().getId()
+      ));
     }
 
+    Page<Employee> employees = employeeRepository.findAll(spec, pageable);
 
-    return employees.stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+    Page<EmployeeResponse> mapped = employees.map(this::mapToResponse);
+
+    return PagedResponse.from(mapped);
   }
 
   @Override

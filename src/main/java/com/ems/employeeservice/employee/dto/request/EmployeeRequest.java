@@ -1,4 +1,4 @@
-package com.ems.employeeservice.employee.dto;
+package com.ems.employeeservice.employee.dto.request;
 
 import com.ems.employeeservice.employee.enums.EmployeeRole;
 import jakarta.validation.constraints.Email;

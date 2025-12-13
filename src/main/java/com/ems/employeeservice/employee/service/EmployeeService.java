@@ -1,10 +1,12 @@
 package com.ems.employeeservice.employee.service;
 
-import com.ems.employeeservice.employee.dto.AuthServiceEmployeeResponse;
-import com.ems.employeeservice.employee.dto.EmployeeRequest;
-import com.ems.employeeservice.employee.dto.EmployeeResponse;
+import com.ems.employeeservice.employee.dto.request.GetEmployeesParamDto;
+import com.ems.employeeservice.employee.dto.response.AuthServiceEmployeeResponse;
+import com.ems.employeeservice.employee.dto.request.EmployeeRequest;
+import com.ems.employeeservice.employee.dto.response.EmployeeResponse;
+import com.ems.employeeservice.employee.dto.response.paginated.PagedResponse;
+import org.springframework.data.domain.Page;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface EmployeeService {
@@ -16,8 +18,8 @@ public interface EmployeeService {
   void deleteEmployee(UUID id);
   
   EmployeeResponse getEmployeeById(UUID employeeId, UUID managerId);
-  
-  List<EmployeeResponse> getAllEmployees(UUID requesterId);
+
+  PagedResponse<EmployeeResponse> getAllEmployees(UUID requesterId, GetEmployeesParamDto paramDto);
   
   AuthServiceEmployeeResponse getEmployeeByEmail(String email);
 }

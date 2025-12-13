@@ -1,4 +1,4 @@
-package com.ems.employeeservice.employee.dto;
+package com.ems.employeeservice.employee.dto.response;
 
 import com.ems.employeeservice.employee.enums.EmployeeRole;
 import com.ems.employeeservice.employee.enums.EmployeeStatus;

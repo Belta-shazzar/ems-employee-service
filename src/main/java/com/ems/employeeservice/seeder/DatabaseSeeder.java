@@ -3,7 +3,7 @@ package com.ems.employeeservice.seeder;
 import com.ems.employeeservice.department.Department;
 import com.ems.employeeservice.department.DepartmentRepository;
 import com.ems.employeeservice.employee.Employee;
-import com.ems.employeeservice.employee.EmployeeRepository;
+import com.ems.employeeservice.employee.repository.EmployeeRepository;
 import com.ems.employeeservice.employee.enums.EmployeeRole;
 import com.ems.employeeservice.employee.enums.EmployeeStatus;
 import lombok.RequiredArgsConstructor;
