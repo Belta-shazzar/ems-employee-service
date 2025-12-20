@@ -3,6 +3,7 @@ package com.ems.employeeservice.employee.service;
 import com.ems.employeeservice.employee.dto.request.GetEmployeesParamDto;
 import com.ems.employeeservice.employee.dto.response.AuthServiceEmployeeResponse;
 import com.ems.employeeservice.employee.dto.request.EmployeeRequest;
+import com.ems.employeeservice.employee.dto.response.DashboardDataStatResponseDto;
 import com.ems.employeeservice.employee.dto.response.EmployeeResponse;
 import com.ems.employeeservice.employee.dto.response.paginated.PagedResponse;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ public interface EmployeeService {
   EmployeeResponse getEmployeeById(UUID employeeId, UUID managerId);
 
   PagedResponse<EmployeeResponse> getAllEmployees(UUID requesterId, GetEmployeesParamDto paramDto);
-  
+  DashboardDataStatResponseDto getDashboardStatData(UUID requesterId);
+
   AuthServiceEmployeeResponse getEmployeeByEmail(String email);
 }

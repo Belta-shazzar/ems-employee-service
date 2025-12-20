@@ -1,6 +1,7 @@
 package com.ems.employeeservice.department;
 
 import com.ems.employeeservice.employee.Employee;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -52,9 +53,11 @@ public class Department {
   @Column(nullable = false, name = "updated_at")
   private LocalDateTime updatedAt;
 
+  @JsonIgnore
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
-  @OneToMany(mappedBy = "department")
+  @JsonIgnore
+  @OneToMany(mappedBy = "department", fetch = FetchType.LAZY)
   private Set<Employee> employees;
 }

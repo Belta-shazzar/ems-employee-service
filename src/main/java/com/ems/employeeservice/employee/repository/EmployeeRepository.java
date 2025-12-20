@@ -1,6 +1,7 @@
 package com.ems.employeeservice.employee.repository;
 
 import com.ems.employeeservice.employee.Employee;
+import com.ems.employeeservice.employee.enums.EmployeeStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,7 +16,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID>, JpaSp
   boolean existsByEmail(String email);
   Optional<Employee> findByEmail(String email);
   Optional<Employee> findAllByIdAndDepartmentId(UUID employeeId, UUID departmentId);
-  Page<Employee> findByDepartmentIdAndIdNot(UUID departmentId, UUID managerId, Pageable pageable);
-  Page<Employee> findByIdNot(UUID managerId, Pageable pageable);
-
+  long countByIdNot(UUID id);
+  long countByDepartmentIdAndIdNot(UUID departmentId, UUID managerId);
+  long countByStatusAndIdNot(EmployeeStatus status, UUID managerId);
+  long countByStatusAndDepartmentIdAndIdNot(EmployeeStatus status, UUID departmentId, UUID managerId);
 }

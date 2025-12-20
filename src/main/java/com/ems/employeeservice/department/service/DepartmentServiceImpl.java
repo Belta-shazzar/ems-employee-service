@@ -72,13 +72,11 @@ public class DepartmentServiceImpl implements DepartmentService {
 
   @Override
   @Transactional(readOnly = true)
-  public DepartmentResponse getDepartmentById(UUID id) {
+  public Department getDepartmentById(UUID id) {
     log.info("Fetching department with id: {}", id);
 
-    Department department = departmentRepository.findById(id)
+    return departmentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + id));
-
-    return mapToResponse(department);
   }
 
   @Override
@@ -91,6 +89,11 @@ public class DepartmentServiceImpl implements DepartmentService {
     return departments.stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
+  }
+
+  @Override
+  public long getDepartmentsCountByStatus(boolean status) {
+    return departmentRepository.countByActive(status);
   }
 
   private DepartmentResponse mapToResponse(Department department) {

@@ -106,9 +106,9 @@ public class DepartmentController {
   })
   @GetMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<DepartmentResponse> getDepartmentById(
+  public ResponseEntity<Department> getDepartmentById(
           @Parameter(description = "Department ID", required = true) @PathVariable UUID id) {
-    DepartmentResponse response = departmentService.getDepartmentById(id);
+    Department response = departmentService.getDepartmentById(id);
     return ResponseEntity.ok(response);
   }
 

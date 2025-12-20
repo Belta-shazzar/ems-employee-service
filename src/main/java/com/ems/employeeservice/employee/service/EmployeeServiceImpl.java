@@ -1,8 +1,9 @@
 package com.ems.employeeservice.employee.service;
 
 import com.ems.employeeservice.department.Department;
-import com.ems.employeeservice.department.DepartmentRepository;
+import com.ems.employeeservice.department.service.DepartmentService;
 import com.ems.employeeservice.employee.Employee;
+import com.ems.employeeservice.employee.dto.response.DashboardDataStatResponseDto;
 import com.ems.employeeservice.employee.dto.response.paginated.PagedResponse;
 import com.ems.employeeservice.employee.repository.EmployeeRepository;
 import com.ems.employeeservice.employee.dto.request.GetEmployeesParamDto;
@@ -35,7 +36,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   private final PasswordEncoder passwordEncoder;
   private final EmployeeRepository employeeRepository;
-  private final DepartmentRepository departmentRepository;
+  private final DepartmentService departmentService;
   private final EmployeeEventProducer employeeEventProducer;
 
   @Override
@@ -45,8 +46,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     boolean exists = employeeRepository.existsByEmail(request.email());
     if (exists) throw new ConflictException("Employee with email already exists");
 
-    Department department = departmentRepository.findById(request.departmentId())
-            .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + request.departmentId()));
+    Department department = departmentService.getDepartmentById(request.departmentId());
 
 
     Employee employee = Employee.builder()
@@ -90,8 +90,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     employee.setRole(request.role());
 
     if (request.departmentId() != null) {
-      Department department = departmentRepository.findById(request.departmentId())
-              .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + request.departmentId()));
+      Department department = departmentService.getDepartmentById(request.departmentId());
       employee.setDepartment(department);
     }
 
@@ -139,8 +138,8 @@ public class EmployeeServiceImpl implements EmployeeService {
   public PagedResponse<EmployeeResponse> getAllEmployees(UUID requesterId, GetEmployeesParamDto dto) {
     Employee employee = employeeRepository.findById(requesterId)
             .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + requesterId));
-    int pageIndex = Math.max(dto.page() - 1, 0);
 
+    int pageIndex = Math.max(dto.page() - 1, 0);
     // Paging
     Pageable pageable = PageRequest.of(
             pageIndex,
@@ -159,11 +158,57 @@ public class EmployeeServiceImpl implements EmployeeService {
       ));
     }
 
+    // Manager restriction: only see employees in same department
+    if (dto.departmentId() != null && employee.getRole() != EmployeeRole.MANAGER) {
+      Department department = departmentService.getDepartmentById(dto.departmentId());
+
+      spec = spec.and(EmployeeSpecification.sameDepartment(
+              department.getId()
+      ));
+    }
+
     Page<Employee> employees = employeeRepository.findAll(spec, pageable);
 
     Page<EmployeeResponse> mapped = employees.map(this::mapToResponse);
 
     return PagedResponse.from(mapped);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public DashboardDataStatResponseDto getDashboardStatData(UUID requesterId) {
+    long employeeCount;
+    long employeeCountByActiveStatus;
+    long employeeCountByPendingStatus;
+    long activeDepartmentCount = 0;
+
+    Employee employee = employeeRepository.findById(requesterId)
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + requesterId));
+
+    if (employee.getRole() == EmployeeRole.ADMIN) {
+      employeeCount = employeeRepository.countByIdNot(employee.getId());
+      employeeCountByActiveStatus = employeeRepository
+              .countByStatusAndIdNot(EmployeeStatus.ACTIVE, employee.getId());
+      employeeCountByPendingStatus = employeeRepository
+              .countByStatusAndIdNot(EmployeeStatus.PENDING, employee.getId());
+      activeDepartmentCount = departmentService.getDepartmentsCountByStatus(true);
+    } else {
+//      Employee counts are based on the manager's department id
+      UUID managerDepartmentId = employee.getDepartment().getId();
+      employeeCount = employeeRepository
+              .countByDepartmentIdAndIdNot(managerDepartmentId, employee.getId());
+      employeeCountByActiveStatus = employeeRepository
+              .countByStatusAndDepartmentIdAndIdNot(EmployeeStatus.ACTIVE, managerDepartmentId, employee.getId());
+      employeeCountByPendingStatus = employeeRepository
+              .countByStatusAndDepartmentIdAndIdNot(EmployeeStatus.PENDING, managerDepartmentId, employee.getId());
+    }
+
+    return new DashboardDataStatResponseDto(
+            employeeCount,
+            employeeCountByActiveStatus,
+            employeeCountByPendingStatus,
+            activeDepartmentCount
+    );
   }
 
   @Override

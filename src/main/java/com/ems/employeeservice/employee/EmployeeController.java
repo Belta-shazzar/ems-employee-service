@@ -4,6 +4,7 @@ import com.ems.employeeservice.config.security.enums.UserHttpHeaders;
 import com.ems.employeeservice.employee.dto.request.GetEmployeesParamDto;
 import com.ems.employeeservice.employee.dto.response.AuthServiceEmployeeResponse;
 import com.ems.employeeservice.employee.dto.request.EmployeeRequest;
+import com.ems.employeeservice.employee.dto.response.DashboardDataStatResponseDto;
 import com.ems.employeeservice.employee.dto.response.EmployeeResponse;
 import com.ems.employeeservice.employee.dto.response.paginated.PagedResponse;
 import com.ems.employeeservice.employee.enums.EmployeeRole;
@@ -19,7 +20,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -150,6 +150,22 @@ public class EmployeeController {
           @ModelAttribute GetEmployeesParamDto paramDto
   ) {
     PagedResponse<EmployeeResponse> response = employeeService.getAllEmployees(requesterId, paramDto);
+    return ResponseEntity.ok(response);
+  }
+
+  @Operation(
+          summary = "Get dashboard stats",
+          description = "Retrieve statistic data for client side admin/manager dashboard"
+  )
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "Stat data retrieved successfully"),
+  })
+  @GetMapping("/dashboard")
+  @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+  public ResponseEntity<DashboardDataStatResponseDto> getDashboardStat(
+          @Parameter(hidden = true) @RequestHeader(UserHttpHeaders.X_EMPLOYEE_ID) UUID requesterId
+  ) {
+    DashboardDataStatResponseDto response = employeeService.getDashboardStatData(requesterId);
     return ResponseEntity.ok(response);
   }
 

@@ -5,6 +5,8 @@ import com.ems.employeeservice.employee.enums.EmployeeStatus;
 import com.ems.employeeservice.employee.enums.Order;
 import com.ems.employeeservice.employee.enums.SortBy;
 
+import java.util.UUID;
+
 public record GetEmployeesParamDto(
         String keyword,
         EmployeeStatus status,
@@ -12,7 +14,9 @@ public record GetEmployeesParamDto(
         SortBy sortBy,
         Order orderBy,
         Integer page,
-        Integer size
+        Integer size,
+        Boolean paginate,
+        UUID departmentId
 ) {
   /**
    * Compact constructor to apply defaults and protect against invalid input.
@@ -20,7 +24,7 @@ public record GetEmployeesParamDto(
   public GetEmployeesParamDto {
     // Default pagination
     if (page == null || page < 1) page = 1;
-    if (size == null || size <= 0) size = 20;
+    if (size == null || size <= 0) size = 10;
 
     // Default sorting
     if (sortBy == null) sortBy = SortBy.created_at;
