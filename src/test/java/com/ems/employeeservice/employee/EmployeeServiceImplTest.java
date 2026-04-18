@@ -1,7 +1,7 @@
 package com.ems.employeeservice.employee;
 
 import com.ems.employeeservice.department.Department;
-import com.ems.employeeservice.department.DepartmentRepository;
+import com.ems.employeeservice.department.service.DepartmentService;
 import com.ems.employeeservice.employee.dto.response.AuthServiceEmployeeResponse;
 import com.ems.employeeservice.employee.dto.request.EmployeeRequest;
 import com.ems.employeeservice.employee.dto.response.EmployeeResponse;
@@ -22,13 +22,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,7 +44,7 @@ class EmployeeServiceImplTest {
   private EmployeeRepository employeeRepository;
 
   @Mock
-  private DepartmentRepository departmentRepository;
+  private DepartmentService departmentService;
 
   @Mock
   private EmployeeEventProducer employeeEventProducer;
@@ -62,10 +58,12 @@ class EmployeeServiceImplTest {
 
   @BeforeEach
   void setUp() {
-//    testDepartment = Department.builder()
-//            .id(UUID.randomUUID())
-//            .name("Engineering")
-//            .build();
+    testDepartment = Department.builder()
+            .id(UUID.randomUUID())
+            .name("Engineering")
+            .description("Department for engineering-related tasks")
+            .active(true)
+            .build();
 
     testEmployee = Employee.builder()
             .id(UUID.randomUUID())
@@ -99,8 +97,8 @@ class EmployeeServiceImplTest {
     void shouldCreateEmployeeSuccessfully() {
       // Given
       when(employeeRepository.existsByEmail(testRequest.email())).thenReturn(false);
-      when(departmentRepository.findById(testDepartment.getId()))
-              .thenReturn(Optional.of(testDepartment));
+      when(departmentService.getDepartmentById(testDepartment.getId()))
+              .thenReturn(testDepartment);
       when(passwordEncoder.encode("password123"))
               .thenReturn("$2a$10$encodedPassword");
       when(employeeRepository.save(any(Employee.class)))
@@ -118,7 +116,7 @@ class EmployeeServiceImplTest {
       assertThat(response.getStatus()).isEqualTo(EmployeeStatus.ACTIVE);
 
       verify(employeeRepository).existsByEmail(testRequest.email());
-      verify(departmentRepository).findById(testDepartment.getId());
+      verify(departmentService).getDepartmentById(testDepartment.getId());
       verify(passwordEncoder).encode("password123");
       verify(employeeRepository).save(any(Employee.class));
       verify(employeeEventProducer).publishEmployeeCreatedEvent(any(EmployeeCreatedEvent.class));
@@ -136,7 +134,7 @@ class EmployeeServiceImplTest {
               .hasMessage("Employee with email already exists");
 
       verify(employeeRepository).existsByEmail(testRequest.email());
-      verify(departmentRepository, never()).findById(any());
+      verify(departmentService, never()).getDepartmentById(any());
       verify(employeeRepository, never()).save(any());
       verify(employeeEventProducer, never()).publishEmployeeCreatedEvent(any());
     }
@@ -146,8 +144,8 @@ class EmployeeServiceImplTest {
     void shouldThrowExceptionWhenDepartmentNotFound() {
       // Given
       when(employeeRepository.existsByEmail(testRequest.email())).thenReturn(false);
-      when(departmentRepository.findById(testDepartment.getId()))
-              .thenReturn(Optional.empty());
+      when(departmentService.getDepartmentById(testDepartment.getId()))
+              .thenThrow(new ResourceNotFoundException("Department not found"));
 
       // When & Then
       assertThatThrownBy(() -> employeeService.createEmployee(testRequest))
@@ -155,7 +153,7 @@ class EmployeeServiceImplTest {
               .hasMessageContaining("Department not found");
 
       verify(employeeRepository).existsByEmail(testRequest.email());
-      verify(departmentRepository).findById(testDepartment.getId());
+      verify(departmentService).getDepartmentById(testDepartment.getId());
       verify(employeeRepository, never()).save(any());
       verify(employeeEventProducer, never()).publishEmployeeCreatedEvent(any());
     }
@@ -165,8 +163,8 @@ class EmployeeServiceImplTest {
     void shouldPublishKafkaEventAfterCreatingEmployee() {
       // Given
       when(employeeRepository.existsByEmail(testRequest.email())).thenReturn(false);
-      when(departmentRepository.findById(testDepartment.getId()))
-              .thenReturn(Optional.of(testDepartment));
+      when(departmentService.getDepartmentById(testDepartment.getId()))
+              .thenReturn(testDepartment);
       when(passwordEncoder.encode("password123"))
               .thenReturn("$2a$10$encodedPassword");
       when(employeeRepository.save(any(Employee.class)))
@@ -198,8 +196,8 @@ class EmployeeServiceImplTest {
       UUID employeeId = testEmployee.getId();
       when(employeeRepository.findById(employeeId))
               .thenReturn(Optional.of(testEmployee));
-      when(departmentRepository.findById(testDepartment.getId()))
-              .thenReturn(Optional.of(testDepartment));
+      when(departmentService.getDepartmentById(testDepartment.getId()))
+              .thenReturn(testDepartment);
       when(employeeRepository.save(any(Employee.class)))
               .thenReturn(testEmployee);
 
@@ -210,7 +208,7 @@ class EmployeeServiceImplTest {
       assertThat(response).isNotNull();
       assertThat(response.getId()).isEqualTo(employeeId);
       verify(employeeRepository).findById(employeeId);
-      verify(departmentRepository).findById(testDepartment.getId());
+      verify(departmentService).getDepartmentById(testDepartment.getId());
       verify(employeeRepository).save(any(Employee.class));
     }
 
@@ -239,7 +237,7 @@ class EmployeeServiceImplTest {
       // Then
       assertThat(response).isNotNull();
       verify(employeeRepository).findById(employeeId);
-      verify(departmentRepository, never()).findById(any());
+      verify(departmentService, never()).getDepartmentById(any());
       verify(employeeRepository).save(any(Employee.class));
     }
 
@@ -267,8 +265,8 @@ class EmployeeServiceImplTest {
       UUID employeeId = testEmployee.getId();
       when(employeeRepository.findById(employeeId))
               .thenReturn(Optional.of(testEmployee));
-      when(departmentRepository.findById(testDepartment.getId()))
-              .thenReturn(Optional.empty());
+      when(departmentService.getDepartmentById(testDepartment.getId()))
+              .thenThrow(new ResourceNotFoundException("Department not found"));
 
       // When & Then
       assertThatThrownBy(() -> employeeService.updateEmployee(employeeId, testRequest))
@@ -276,7 +274,7 @@ class EmployeeServiceImplTest {
               .hasMessageContaining("Department not found");
 
       verify(employeeRepository).findById(employeeId);
-      verify(departmentRepository).findById(testDepartment.getId());
+      verify(departmentService).getDepartmentById(testDepartment.getId());
       verify(employeeRepository, never()).save(any());
     }
   }

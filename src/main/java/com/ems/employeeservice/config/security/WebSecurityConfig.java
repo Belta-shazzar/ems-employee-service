@@ -21,6 +21,7 @@ public class WebSecurityConfig {
   private final UserInfoExtractionFilter userInfoExtractionFilter;
   private static final String[] WHITE_LIST_URL = {
           "/api/employees/email/{email}",
+          "/actuator/**",
 
           // Swagger UI and API docs
           "/v3/api-docs",

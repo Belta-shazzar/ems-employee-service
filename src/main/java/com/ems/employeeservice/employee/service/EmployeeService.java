@@ -6,7 +6,6 @@ import com.ems.employeeservice.employee.dto.request.EmployeeRequest;
 import com.ems.employeeservice.employee.dto.response.DashboardDataStatResponseDto;
 import com.ems.employeeservice.employee.dto.response.EmployeeResponse;
 import com.ems.employeeservice.employee.dto.response.paginated.PagedResponse;
-import org.springframework.data.domain.Page;
 
 import java.util.UUID;
 
