@@ -1,13 +1,16 @@
 package com.ems.employeeservice.employee;
 
 import com.ems.employeeservice.config.security.enums.UserHttpHeaders;
+import com.ems.employeeservice.employee.dto.request.EmployeeStatusUpdateRequest;
 import com.ems.employeeservice.employee.dto.request.GetEmployeesParamDto;
 import com.ems.employeeservice.employee.dto.response.AuthServiceEmployeeResponse;
 import com.ems.employeeservice.employee.dto.request.EmployeeRequest;
 import com.ems.employeeservice.employee.dto.response.DashboardDataStatResponseDto;
 import com.ems.employeeservice.employee.dto.response.EmployeeResponse;
+import com.ems.employeeservice.employee.dto.response.StringResponse;
 import com.ems.employeeservice.employee.dto.response.paginated.PagedResponse;
 import com.ems.employeeservice.employee.enums.EmployeeRole;
+import com.ems.employeeservice.employee.enums.EmployeeStatus;
 import com.ems.employeeservice.employee.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
@@ -202,6 +205,30 @@ public class EmployeeController {
   ) {
 
     EmployeeResponse response = employeeService.getEmployeeById(employeeId, null);
+    return ResponseEntity.ok(response);
+  }
+
+  @Operation(
+          summary = "Update an employee's status",
+          description = "Updates an existing employee's status. Admin role required."
+  )
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "Employee status updated successfully",
+                  content = @Content(schema = @Schema(implementation = EmployeeResponse.class))),
+//          @ApiResponse(responseCode = "400", description = "Invalid input data"),
+          @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing JWT token"),
+          @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+          @ApiResponse(responseCode = "404", description = "Employee not found")
+  })
+  @PutMapping("/{id}/update-status")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<StringResponse> updateEmployeeStatus(
+          @Parameter(description = "Employee ID", required = true) @PathVariable UUID id,
+          @Parameter(description = "Employee status for update", required = true)
+          @Valid @RequestBody EmployeeStatusUpdateRequest updateRequestDto
+  ) {
+
+    StringResponse response = employeeService.updateEmployeeStatus(id, updateRequestDto);
     return ResponseEntity.ok(response);
   }
 }

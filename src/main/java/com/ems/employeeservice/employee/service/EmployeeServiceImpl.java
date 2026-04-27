@@ -3,7 +3,9 @@ package com.ems.employeeservice.employee.service;
 import com.ems.employeeservice.department.Department;
 import com.ems.employeeservice.department.service.DepartmentService;
 import com.ems.employeeservice.employee.Employee;
+import com.ems.employeeservice.employee.dto.request.EmployeeStatusUpdateRequest;
 import com.ems.employeeservice.employee.dto.response.DashboardDataStatResponseDto;
+import com.ems.employeeservice.employee.dto.response.StringResponse;
 import com.ems.employeeservice.employee.dto.response.paginated.PagedResponse;
 import com.ems.employeeservice.employee.repository.EmployeeRepository;
 import com.ems.employeeservice.employee.dto.request.GetEmployeesParamDto;
@@ -14,6 +16,7 @@ import com.ems.employeeservice.employee.enums.EmployeeRole;
 import com.ems.employeeservice.employee.enums.EmployeeStatus;
 import com.ems.employeeservice.employee.repository.EmployeeSpecification;
 import com.ems.employeeservice.event.EmployeeCreatedEvent;
+import com.ems.employeeservice.event.EmployeeStatusUpdateEvent;
 import com.ems.employeeservice.exception.custom.ConflictException;
 import com.ems.employeeservice.exception.custom.ResourceNotFoundException;
 import com.ems.employeeservice.kafka.EmployeeEventProducer;
@@ -27,6 +30,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -61,6 +65,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     Employee savedEmployee = employeeRepository.save(employee);
     log.info("Employee created successfully with id: {}", savedEmployee.getId());
+    System.out.println("The creation date: " + savedEmployee.getCreatedAt());
 
     // Publish Kafka event
     EmployeeCreatedEvent event = EmployeeCreatedEvent.builder()
@@ -68,7 +73,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             .firstName(savedEmployee.getFirstName())
             .lastName(savedEmployee.getLastName())
             .email(savedEmployee.getEmail())
-            .createdAt(savedEmployee.getCreatedAt())
+            .createdAt(LocalDateTime.now())
             .build();
 
     employeeEventProducer.publishEmployeeCreatedEvent(event);
@@ -220,6 +225,33 @@ public class EmployeeServiceImpl implements EmployeeService {
             .orElseThrow(() -> new ResourceNotFoundException("Employee not found with email: " + email));
 
     return mapToAuthServiceResponse(employee);
+  }
+
+  @Override
+  public StringResponse updateEmployeeStatus(UUID id, EmployeeStatusUpdateRequest updateRequestDto) {
+    log.info("Updating employee status by id: {}", id);
+
+    Employee employee = employeeRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
+
+    if (employee.getStatus() == updateRequestDto.status()) {
+      throw new ConflictException("Employee is already in " + updateRequestDto.status().name() + " status");
+    }
+
+    employee.setStatus(updateRequestDto.status());
+    employeeRepository.save(employee);
+    log.info("Employee status updated successfully with id: {}", id);
+
+    EmployeeStatusUpdateEvent event = EmployeeStatusUpdateEvent.builder()
+            .employeeId(id)
+            .firstName(employee.getFirstName())
+            .email(employee.getEmail())
+            .status(updateRequestDto.status())
+            .build();
+
+    employeeEventProducer.publishEmployeeStatusUpdateEvent(event);
+
+    return new StringResponse("Employee status updated successfully");
   }
 
   private EmployeeResponse mapToResponse(Employee employee) {
