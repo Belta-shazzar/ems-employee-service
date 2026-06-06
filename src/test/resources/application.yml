@@ -7,7 +7,6 @@ spring:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   kafka:
-    bootstrap-servers: ${spring.embedded.kafka.brokers}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -23,4 +22,5 @@ eureka:
 
 kafka:
   topic:
-    employee-created: employee-created-topic
+    employee-created: employee-created
+    employee-status-update: employee-status-update

@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @Transactional
-@EmbeddedKafka
+@EmbeddedKafka(bootstrapServersProperty = "spring.kafka.bootstrap-servers")
 @Testcontainers
 @AutoConfigureMockMvc
 @DisplayName("Department Controller Integration Tests")

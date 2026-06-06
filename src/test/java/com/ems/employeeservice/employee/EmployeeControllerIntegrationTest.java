@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
-@EmbeddedKafka(partitions = 1, topics = {"employee-created-topic"})
+@EmbeddedKafka(partitions = 1, topics = {"employee-created", "employee-status-update"}, bootstrapServersProperty = "spring.kafka.bootstrap-servers")
 @Transactional
 @DisplayName("Employee Controller Integration Tests")
 class EmployeeControllerIntegrationTest {
