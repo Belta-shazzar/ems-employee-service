@@ -10,7 +10,7 @@ RUN chown spring:spring app.jar
 
 USER spring:spring
 
-EXPOSE 8020
+EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8020/actuator/health || exit 1
