@@ -1,21 +1,17 @@
 package com.ems.employeeservice.department;
 
 import com.ems.employeeservice.department.dto.DepartmentRequest;
+import com.ems.employeeservice.shared.BaseIntegrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+
 
 import java.util.UUID;
 
@@ -25,20 +21,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@Transactional
-@EmbeddedKafka(bootstrapServersProperty = "spring.kafka.bootstrap-servers")
-@Testcontainers
-@AutoConfigureMockMvc
-@DisplayName("Department Controller Integration Tests")
-class DepartmentControllerIntegrationTest {
 
-  @Container
-  @SuppressWarnings({"resource", "unused"})
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15")
-          .withDatabaseName("test_db")
-          .withUsername("test")
-          .withPassword("test");
+@Transactional
+@DisplayName("Department Controller Integration Tests")
+class DepartmentControllerIntegrationTest extends BaseIntegrationTest {
 
   @Autowired
   private MockMvc mockMvc;
@@ -504,14 +490,12 @@ class DepartmentControllerIntegrationTest {
     @DisplayName("Should verify department persistence across operations")
     @WithMockUser(roles = "ADMIN")
     void shouldVerifyDepartmentPersistenceAcrossOperations() throws Exception {
-      // Create first department
       DepartmentRequest request1 = new DepartmentRequest("Engineering", "Engineering", true);
       mockMvc.perform(post("/api/departments")
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(objectMapper.writeValueAsString(request1)))
               .andExpect(status().isCreated());
 
-      // Create second department
       DepartmentRequest request2 = new DepartmentRequest("Human Resources", "HR", true);
       mockMvc.perform(post("/api/departments")
                       .contentType(MediaType.APPLICATION_JSON)

@@ -42,6 +42,7 @@ public class Department {
   @Column(length = 500)
   private String description;
 
+  @Builder.Default
   @Column(nullable = false)
   private boolean active = true;
 
